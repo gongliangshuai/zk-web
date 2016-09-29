@@ -15,6 +15,10 @@ client.once('connected', function () {
 
     client.create(path, new Buffer('data'), zookeeper.CreateMode.EPHEMERAL, function (error) {
         if (error) {
+        	console.log(error.getCode());
+        	if(error.getCode() == zookeeper.Exception.NODE_EXISTS){
+        		console.log("Node exists.");
+        	}
             console.log('Failed to create node: %s due to: %s.', path, error);
         } else {
             console.log('Node: %s is successfully created.', path);
