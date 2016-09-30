@@ -9,6 +9,7 @@ var zookeeper = require('node-zookeeper-client');
 
 var client = zookeeper.createClient('127.0.0.1:2181', { retries : 2 });
 var path = '/split/'+process.argv[2];
+//var path = '/split';
 
 function getData(client, path) {
     client.getData(
@@ -35,6 +36,18 @@ function getData(client, path) {
                 data ? data.toString() : undefined,
                 stat.version
             );
+            if(data){
+                try{
+                    var cmd = JSON.parse(data);
+                    console.log(cmd);
+                } catch (e){
+                    console.log("不是json！");
+                }
+
+                
+            }else {
+                console("没有数据！");
+            }
         }
     );
 }

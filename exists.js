@@ -5,10 +5,10 @@
  * for terms.
  */
 
-var zookeeper = require('../index.js');
+var zookeeper = require('node-zookeeper-client');
 
-var client = zookeeper.createClient(process.argv[2], { retries : 2 });
-var path = process.argv[3];
+var client = zookeeper.createClient('127.0.0.1:2181', { retries : 2 });
+var path = '/split/'+process.argv[2];
 
 function exists(client, path) {
     client.exists(
