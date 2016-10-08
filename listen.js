@@ -1,7 +1,14 @@
 var zookeeper = require('node-zookeeper-client');
 const mongo = require('mongoskin');
+const moment = require('moment');
 var thunkify = require('thunkify');
 var co = require('co');
+
+var router = require('koa-router')();
+var koa = require('koa');
+
+var app = koa();
+app.use(router.routes());
 
 const db = mongo.db("mongodb://101.200.130.59:27017/split", {
     native_parser: true
@@ -19,6 +26,8 @@ var client = zookeeper.createClient('127.0.0.1:2181');
 var path = '/split';
 var znode = [];
 var host = '123.123.123.1'
+
+const curTime = () => moment().format("YYYY-MM-DD HH:mm:ss");
 
 //任务
 const TASKS = {
@@ -48,6 +57,7 @@ const TASKS = {
 };
 
 var init = function() {
+
     db.tasks.findOne({
         _id: host
     }, function(err, data) {
@@ -110,6 +120,7 @@ function createAndListen(client,path,callback){
             }
             console.log(error.getCode());
             console.log('Failed to create node: %s due to: %s.', path, error);
+            callback(null,'Failed to create node');
         } else {
             getData(client, path, true, callback);
             console.log('Node: %s is successfully created.', path);
@@ -367,4 +378,47 @@ client.once('connected', function() {
 //         this.splice(index, 1);
 //     }
 // };
+// 
+router.get('/control', function *(next) {
+        var query = this.request.query;
+        console.log("[" + (curTime()) + "][info]: access " + this.request.url);
+        var op = query.op;
+        var sid = query.sid;
+        var result;
+        if (op !== 'start' && op !== 'stop' && op !== 'restart') {
+            result = {
+                ret: EINVALIDPARAM,
+                msg: "Invalid params"
+            };
+            this.body = result;
+            return;
+        }
+        if(op == 'start'){
+            start(sid);
+        }
+        if(op == 'stop'){
+            stop(sid);
+        }
+        if(op == 'restart'){
+            restart(sid);
+        }
+        var result = {
+            ret: 'OK',
+            tasks: TASKS.content,
+            znode: znode
+        };
+        this.body = result;
+});
+
+router.get('/', function *(next) {
+        var result = {
+            ret: 'OK',
+            tasks: TASKS.content,
+            znode: znode
+        };
+        this.body = result;
+});
+
+app.listen(3000);
+console.log("[" + (curTime()) + "][Info]: Listening on 0.0.0.0:" + '3000');
 client.connect();
