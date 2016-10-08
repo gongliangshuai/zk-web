@@ -73,12 +73,13 @@ var init = function() {
             var tasks = Array();
             for (var i = n*100+n; i < n * 100 + 101; i++) {
                 console.log(i);
-                tasks.push(i);
+                tasks.push(i.toString());
             }
-            for (index in tasks) {
-                task = tasks[index];
-                console.log(task);
-                co(function*() {
+            co(function*() {
+                for (index in tasks) {
+                    task = tasks[index];
+                    console.log(task);
+                
                     let sid = task;
                     console.log(`${path}/${sid}`);
                     var exists = yield exists_sync(client, `${path}/${sid}`);
@@ -94,7 +95,7 @@ var init = function() {
                                 var result = yield createAndListen_sync(client, `${path}/${sid}`);
                                 if(result){
                                    znode.push(sid);
-                                   TASKS.add(sid);
+                                   TASKS.content[sid] = sid;
                                 }
                             }else{
                                 console.log(`删除失败：${path}/${sid}`);
@@ -109,14 +110,15 @@ var init = function() {
                         var result = yield createAndListen_sync(client, `${path}/${sid}`);
                         if(result){
                             znode.push(sid);
-                            TASKS.add(sid);
+                            TASKS.content[sid] = sid;
                         }
                     }
                     //console.log(znode);
-                });
-                console.log(task);
-
-            }
+                    TASKS.save();
+                    //console.log(znode);
+                }
+                console.log('znode');
+            });
         }
     });
 }
@@ -433,6 +435,6 @@ router.get('/', function *(next) {
         this.body = result;
 });
 
-app.listen(3000);
+app.listen(3031);
 console.log("[" + (curTime()) + "][Info]: Listening on 0.0.0.0:" + '3000');
 client.connect();

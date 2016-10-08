@@ -25,7 +25,7 @@ db.bind('tasks', {
 var client = zookeeper.createClient('127.0.0.1:2181');
 var path = '/split';
 var znode = [];
-var host = '123.123.123.1'
+var host = '123.123.123.3'
 
 const curTime = () => moment().format("YYYY-MM-DD HH:mm:ss");
 
@@ -68,12 +68,12 @@ var init = function() {
             //console.log('data');
             //console.log(data);
             //tasks = data.tasks;
-            var n = 1;
+            var n = 3;
             //tasks = [0,1,2,3,4,5];//代表数据库
             var tasks = Array();
             for (var i = n*100+n; i < n * 100 + 101; i++) {
                 console.log(i);
-                tasks.push(i);
+                tasks.push(i.toString());
             }
             for (index in tasks) {
                 task = tasks[index];
@@ -433,6 +433,6 @@ router.get('/', function *(next) {
         this.body = result;
 });
 
-app.listen(3000);
+app.listen(3033);
 console.log("[" + (curTime()) + "][Info]: Listening on 0.0.0.0:" + '3000');
 client.connect();
