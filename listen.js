@@ -22,10 +22,13 @@ db.bind('tasks', {
     strict: true
 });
 
+var id = process.argv[2];
+console.log('id:' + id);
+
 var client = zookeeper.createClient('127.0.0.1:2181');
 var path = '/split';
 var znode = [];
-var host = '123.123.123.1'
+var host = `123.123.123.${id}`;
 
 const curTime = () => moment().format("YYYY-MM-DD HH:mm:ss");
 
@@ -68,17 +71,18 @@ var init = function() {
             //console.log('data');
             //console.log(data);
             //tasks = data.tasks;
-            var n = 1;
+            var n = parseInt(id);
             //tasks = [0,1,2,3,4,5];//代表数据库
             var tasks = Array();
-            for (var i = n*100+n; i < n * 100 + 101; i++) {
+            for (var i = n*10+1; i < n * 10 + 11; i++) {
                 console.log(i);
-                tasks.push(i);
+                tasks.push(i.toString());
             }
-            for (index in tasks) {
-                task = tasks[index];
-                console.log(task);
-                co(function*() {
+            co(function*() {
+                for (index in tasks) {
+                    task = tasks[index];
+                    console.log(task);
+                
                     let sid = task;
                     console.log(`${path}/${sid}`);
                     var exists = yield exists_sync(client, `${path}/${sid}`);
@@ -94,7 +98,7 @@ var init = function() {
                                 var result = yield createAndListen_sync(client, `${path}/${sid}`);
                                 if(result){
                                    znode.push(sid);
-                                   TASKS.add(sid);
+                                   TASKS.content[sid] = sid;
                                 }
                             }else{
                                 console.log(`删除失败：${path}/${sid}`);
@@ -109,14 +113,15 @@ var init = function() {
                         var result = yield createAndListen_sync(client, `${path}/${sid}`);
                         if(result){
                             znode.push(sid);
-                            TASKS.add(sid);
+                            TASKS.content[sid] = sid;
                         }
                     }
                     //console.log(znode);
-                });
-                console.log(task);
-
-            }
+                    TASKS.save();
+                    //console.log(znode);
+                }
+                console.log('init over');
+            });
         }
     });
 }
@@ -164,6 +169,7 @@ function getData(client, path, watch, callback) {
                     var index = znode.indexOf(arr[arr.length-1]);
                     if (index > -1) {
                         znode.splice(index, 1);
+                        console.log(arr[arr.length-1]);
                         TASKS.remove(arr[arr.length-1]);
                     }
                     //console.log(znode);
@@ -235,7 +241,7 @@ function start(sid) {
                     var result = yield createAndListen_sync(client, `${path}/${sid}`);
                     if (result) {
                         znode.push(sid);
-                        TASKS.add(sid);
+                        TASKS.add(sid,sid);
                         //启动进程
                     }
                 }
@@ -246,7 +252,7 @@ function start(sid) {
             var result = yield createAndListen_sync(client, `${path}/${sid}`);
             if (result) {
                 znode.push(sid);
-                TASKS.add(sid);
+                TASKS.add(sid,sid);
             }
         }
     })
@@ -278,7 +284,7 @@ function restart(sid) {
                     var result = yield createAndListen_sync(client, `${path}/${sid}`);
                     if (result) {
                         znode.push(sid);
-                        TASKS.add(sid);
+                        TASKS.add(sid,sid);
                         //重启进程
                     }
                 }
@@ -289,7 +295,7 @@ function restart(sid) {
             var result = yield createAndListen_sync(client, `${path}/${sid}`);
             if (result) {
                 znode.push(sid);
-                TASKS.add(sid);
+                TASKS.add(sid,sid);
             }
         }
     })
@@ -433,6 +439,6 @@ router.get('/', function *(next) {
         this.body = result;
 });
 
-app.listen(3000);
-console.log("[" + (curTime()) + "][Info]: Listening on 0.0.0.0:" + '3000');
+app.listen(`303${id}`);
+console.log("[" + (curTime()) + "][Info]: Listening on 0.0.0.0:" + `303${id}`);
 client.connect();
